@@ -81,16 +81,6 @@ class GHEAuthBackend(object):
         self.ghe_oauth = None
         self.api_rev = None
 
-    def ghe_api_route(self, leaf):
-        if not self.api_rev:
-            self.api_rev = get_config_param('api_rev')
-
-        return '/'.join(['https:/',
-                         self.ghe_host,
-                         'api',
-                         self.api_rev,
-                         leaf.strip('/')])
-
     def init_app(self, flask_app):
         self.flask_app = flask_app
 
@@ -102,7 +92,7 @@ class GHEAuthBackend(object):
             consumer_secret=get_config_param('client_secret'),
             # need read:org to get team member list
             request_token_params={'scope': 'user:email,read:org'},
-            base_url=self.ghe_host,
+            base_url='https://api.' + self.ghe_host,
             request_token_url=None,
             access_token_method='POST',
             access_token_url=''.join(['https://',
@@ -126,7 +116,7 @@ class GHEAuthBackend(object):
             next=request.args.get('next') or request.referrer or None))
 
     def get_ghe_user_profile_info(self, ghe_token):
-        resp = self.ghe_oauth.get(self.ghe_api_route('/user'),
+        resp = self.ghe_oauth.get('/user',
                                   token=(ghe_token, ''))
 
         if not resp or resp.status != 200:
@@ -153,7 +143,7 @@ class GHEAuthBackend(object):
             return True
 
         # https://developer.github.com/v3/orgs/teams/#list-user-teams
-        resp = self.ghe_oauth.get(self.ghe_api_route('/user/teams'),
+        resp = self.ghe_oauth.get('/user/teams',
                                   token=(ghe_token, ''))
 
         if not resp or resp.status != 200:
