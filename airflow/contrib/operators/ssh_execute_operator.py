@@ -58,7 +58,7 @@ class SSHTempFileContent(object):
                                   "mktemp", "-t", prefix + "_XXXXXX"],
                                  stdout=subprocess.PIPE,
                                  stderr=STDOUT)
-        tempfile = pmktemp.communicate()[0].rstrip()
+        tempfile = pmktemp.communicate()[0].split()[-1].decode()
         pmktemp.wait()
         if pmktemp.returncode:
             raise AirflowException("Failed to create remote temp file")

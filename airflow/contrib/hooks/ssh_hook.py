@@ -59,6 +59,7 @@ class SSHHook(BaseHook):
         self.no_host_key_check = conn.extra_dejson.get('no_host_key_check', False)
         self.tty = conn.extra_dejson.get('tty', False)
         self.sshpass = conn.extra_dejson.get('sshpass', False)
+        self.tunnels = conn.extra_dejson.get('tunnels', [])
         self.conn = conn
 
     def get_conn(self):
@@ -96,6 +97,9 @@ class SSHHook(BaseHook):
 
         if self.tty:
             connection_cmd += ["-t"]
+
+        for tunnel in self.tunnels:
+            connection_cmd += ['-q', 'ssh', tunnel]
 
         connection_cmd += cmd
         logging.debug("SSH cmd: {} ".format(connection_cmd))
