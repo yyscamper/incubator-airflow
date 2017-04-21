@@ -127,23 +127,23 @@ class GHEAuthBackend(object):
         return resp.data['login'], resp.data['email']
 
     def ghe_team_check(self, username, ghe_token):
+        # the response from ghe returns the id of the team as an integer
         try:
-            # the response from ghe returns the id of the team as an integer
-            try:
-                allowed_teams = [int(team.strip())
-                                 for team in
-                                 get_config_param('allowed_teams').split(',')]
-            except ValueError:
-                # this is to deprecate using the string name for a team
-                raise ValueError('it appears that you are using the string name for a team, '
-                                 'please use the id number instead')
-
+            allowed_teams = [int(team.strip())
+                             for team in
+                             get_config_param('allowed_teams').split(',')]
+        except ValueError:
+            # this is to deprecate using the string name for a team
+            raise ValueError('it appears that you are using the string name for a team, '
+                             'please use the id number instead')
         except AirflowConfigException:
             # No allowed teams defined, let anyone in GHE in.
             return True
+        else:
+            _log.debug('Allowing team ids %s', allowed_teams)
 
         # https://developer.github.com/v3/orgs/teams/#list-user-teams
-        resp = self.ghe_oauth.get('/user/teams',
+        resp = self.ghe_oauth.get('/user/orgs',
                                   token=(ghe_token, ''))
 
         if not resp or resp.status != 200:
