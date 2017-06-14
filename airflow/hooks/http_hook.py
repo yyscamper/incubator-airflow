@@ -59,7 +59,6 @@ class HttpHook(BaseHook):
         session = self.get_conn(headers)
 
         url = self.base_url + endpoint
-        req = None
         if self.method == 'GET':
             # GET uses params
             req = requests.Request(self.method,
@@ -84,14 +83,17 @@ class HttpHook(BaseHook):
         """
         extra_options = extra_options or {}
 
-        response = session.send(
-            prepped_request,
-            stream=extra_options.get("stream", False),
-            verify=extra_options.get("verify", False),
-            proxies=extra_options.get("proxies", {}),
-            cert=extra_options.get("cert"),
-            timeout=extra_options.get("timeout"),
-            allow_redirects=extra_options.get("allow_redirects", True))
+        try:
+            response = session.send(
+                prepped_request,
+                stream=extra_options.get("stream", False),
+                verify=extra_options.get("verify", False),
+                proxies=extra_options.get("proxies", {}),
+                cert=extra_options.get("cert"),
+                timeout=extra_options.get("timeout"),
+                allow_redirects=extra_options.get("allow_redirects", True))
+        except ConnectionError as err:
+            raise AirflowException('%d:%s' % (500, str(err)))
 
         try:
             response.raise_for_status()
