@@ -49,10 +49,10 @@ class FTPSensor(BaseSensorOperator):
                 hook.get_mod_time(self.path)
             except ftplib.error_perm as e:
                 error = str(e).split(None, 1)
-                if error[1] != "Can't check for file existence":
-                    raise e
+                if error[1].startswith('Could not get file modification time.'):
+                    return False
 
-                return False
+                raise e
 
             return True
 
