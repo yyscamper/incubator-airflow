@@ -537,6 +537,7 @@ class Connection(Base):
         ('mssql', 'Microsoft SQL Server'),
         ('mesos_framework-id', 'Mesos Framework ID'),
         ('jira', 'JIRA',),
+        ('amqp', 'AMQP',),
     ]
 
     def __init__(
@@ -564,6 +565,8 @@ class Connection(Base):
         conn_type = temp_uri.scheme
         if conn_type == 'postgresql':
             conn_type = 'postgres'
+        if conn_type == 'rabbitmq':
+            conn_type = 'amqp'
         self.conn_type = conn_type
         self.host = hostname
         self.schema = temp_uri.path[1:]
@@ -658,6 +661,9 @@ class Connection(Base):
                 from airflow.contrib.hooks.cloudant_hook import CloudantHook
                 return CloudantHook(cloudant_conn_id=self.conn_id)
             elif self.conn_type == 'jira':
+                from airflow.contrib.hooks.jira_hook import JiraHook
+                return JiraHook(jira_conn_id=self.conn_id)
+            elif self.conn_type == 'amqp':
                 from airflow.contrib.hooks.jira_hook import JiraHook
                 return JiraHook(jira_conn_id=self.conn_id)
         except:
@@ -3817,7 +3823,7 @@ class DagStat(Base):
         """
         :param dag_id: the dag_id to mark dirty
         :param session: database session
-        :return: 
+        :return:
         """
         DagStat.create(dag_id=dag_id, session=session)
 
@@ -3894,11 +3900,11 @@ class DagStat(Base):
     @provide_session
     def create(dag_id, session=None):
         """
-        Creates the missing states the stats table for the dag specified 
-        
+        Creates the missing states the stats table for the dag specified
+
         :param dag_id: dag id of the dag to create stats for
         :param session: database session
-        :return: 
+        :return:
         """
         # unfortunately sqlalchemy does not know upsert
         qry = session.query(DagStat).filter(DagStat.dag_id == dag_id).all()
@@ -4008,7 +4014,7 @@ class DagRun(Base):
         :type state: State
         :param external_trigger: whether this dag run is externally triggered
         :type external_trigger: bool
-        :param no_backfills: return no backfills (True), return all (False). 
+        :param no_backfills: return no backfills (True), return all (False).
         Defaults to False
         :type no_backfills: bool
         :param session: database session
